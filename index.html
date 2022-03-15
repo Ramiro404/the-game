@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creando un metaverso con Javascript</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="js/three.js" defer></script>
+    <script src="js/GLTFLoader.js" defer></script>
+    <script src="js/FBXLoader.js" defer></script>
+    <script src="js/fflate.min.js" defer></script>
+    <script src="src/index.js" type="module"></script>
+</head>
+<body>
+    <br><br><br>
+    <div class="grid-container">
+        <div>
+            <div class="grid-queue" id="grid-queue">
+
+            </div>
+            <button id="up">U</button>
+            <button id="right">R</button>
+            <button id="left">L</button>
+            <button id="down">D</button>
+            <button id="start">Start</button>
+        </div>
+        <div id="game"></div>
+    </div>
+</body>
+</html>

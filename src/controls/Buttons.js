@@ -6,8 +6,9 @@ var btnDown = document.getElementById("down");
 var btnRight = document.getElementById("right");
 var btnLeft = document.getElementById("left");
 var btnStart = document.getElementById("start");
+var btnRemove = document.getElementById("remove");
 var gridMove = document.getElementById("grid-queue");
-
+var btnTryAgain = document.getElementById("try-again");
 
 btnUp.addEventListener('click', () => {
     insertTag("U");
@@ -29,51 +30,50 @@ btnRight.addEventListener('click', () => {
 
 btnLeft.addEventListener('click', () => {
     insertTag("L");
-    queueDiv.enqueue("<div>L</div>")
+    queueDiv.enqueue("<div>L</div>");
     queue.enqueue("LEFT");
+});
+
+btnTryAgain.addEventListener('click', ()=>{
+    tryAgain = true;
+    btnTryAgain.hidden = true;
+    start=false;
+})
+
+btnRemove.addEventListener('click', ()=>{
+    gridMove.innerHTML = "";
+    for(let i=0; i<=queue.length();i++){
+        queue.dequeue();
+    }
 })
 
 function insertTag(item){
     gridMove.innerHTML += `<div>${item}</div>`;
 }
 
-let start = false;
+let start = false, tryAgain = false;
 btnStart.addEventListener('click', () => {
+    disableAllButtons();
     start = true;
-})
+});
 
-export {start, queue, queueDiv};
+function disableAllButtons(){
+    
+    btnDown.disabled = true;
+    btnLeft.disabled = true;
+    btnRight.disabled = true;
+    btnUp.disabled = true;
+    btnStart.disabled = true;
+    btnRemove.disabled = true;
+    let d = "disabled";
+    btnStart.classList.add(d);
+    btnDown.classList.add(d);
+    btnLeft.classList.add(d);
+    btnUp.classList.add(d);
+    btnRight.classList.add(d);
+    btnRemove.classList.add(d);
+}
 
 
-// if (start && !queue.isEmpty()) {
-//     var move = queue.dequeue();
-//     switch (move) {
-//         case "UP":
-//             x--;
-//             boxPosition.setPosition(x, z);
-//             if (!isThereCollition())
-//                 box.position.set(x, 0.5, z);
-//             break;
-//         case "DOWN":
-//             ++x;
-//             boxPosition.setPosition(x, z);
-//             if (!isThereCollition())
-//                 box.position.set(x, 0.5, z);
-//             break;
-//         case "LEFT":
-//             z++;
-//             boxPosition.setPosition(x, z);
-//             if (!isThereCollition())
-//                 box.position.set(x, 0.5, z);
-//             break;
-//         case "RIGHT":
-//             z--;
-//             boxPosition.setPosition(x, z);
-//             if (!isThereCollition())
-//                 box.position.set(x, 0.5, z);
-//             break;
-//     }
-//     if(queue.isEmpty()){
-//         start=false;
-//     }
-// }
+
+export {start, tryAgain, queue, queueDiv, btnTryAgain};

@@ -8,7 +8,7 @@ function setModel(model){
 function isThereCollition(){
     for(let i=0; i<obtaclesPosition.length;i++){
         let obstacle = obtaclesPosition[i];
-        console.log(position.x + " , " + position.z + " [] " + obstacle.x + " , " + obstacle.z);
+        //console.log(position.x + " , " + position.z + " [] " + obstacle.x + " , " + obstacle.z);
         if(position.x == obstacle.x && position.z== obstacle.z){
             colitionObject = obstacle;
             return true;

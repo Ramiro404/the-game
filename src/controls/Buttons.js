@@ -9,6 +9,7 @@ var btnStart = document.getElementById("start");
 var btnRemove = document.getElementById("remove");
 var gridMove = document.getElementById("grid-queue");
 var btnTryAgain = document.getElementById("try-again");
+var pMessage = document.getElementById("message-modal");
 
 btnUp.addEventListener('click', () => {
     insertTag("U");
@@ -36,8 +37,12 @@ btnLeft.addEventListener('click', () => {
 
 btnTryAgain.addEventListener('click', ()=>{
     tryAgain = true;
-    btnTryAgain.hidden = true;
+    myModal.style.visibility = 'hidden';
+    
+    /*btnTryAgain.hidden = true;*/
     start=false;
+    enableButtons();
+    window.location.reload(true)
 })
 
 btnRemove.addEventListener('click', ()=>{
@@ -75,5 +80,32 @@ function disableAllButtons(){
 }
 
 
+function enableButtons(){
+    
+    btnDown.disabled = false;
+    btnLeft.disabled = false;
+    btnRight.disabled = false;
+    btnUp.disabled = false;
+    btnStart.disabled = false;
+    btnRemove.disabled = false;
+    let d = "disabled";
+    btnStart.classList.remove(d);
+    btnDown.classList.remove(d);
+    btnLeft.classList.remove(d);
+    btnUp.classList.remove(d);
+    btnRight.classList.remove(d);
+    btnRemove.classList.remove(d);
+}
 
-export {start, tryAgain, queue, queueDiv, btnTryAgain};
+function showModalTryAgain(message){
+    myModal.style.display = 'block';
+    pMessage.innerText = message;
+}
+
+var myModal = document.getElementById('myModal')
+
+myModal.addEventListener('shown.bs.modal', function () {
+  myInput.focus()
+})
+
+export {start, tryAgain, queue, queueDiv, btnTryAgain, showModalTryAgain};

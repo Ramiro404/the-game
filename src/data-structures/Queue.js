@@ -22,4 +22,8 @@ Queue.prototype.length = function() {
     return this.elements.length;
 }
 
+Queue.prototype.empty = function(){
+    return this.elements = [];
+}
+
 export default Queue;

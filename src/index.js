@@ -23,8 +23,8 @@ import key from './models/key/Key.js';
 import calcPosition from './basic/CalculatePosition.js';
 import lock from './models/lock/Lock.js';
 import goal from './models/goal/Goal.js';
-import { obtaclesPosition, setModel, isThereCollition, updateBeforeMoveObject, colitionObject } from './basic/Obtacles.js';
-import { jump, setCubyModelForJump, jumpPretty } from './basic/Jump.js';
+import { obtaclesPosition, setModel, isThereCollition, updateBeforeMoveObject, colitionObject, isOutOfMap } from './basic/Obtacles.js';
+import { jump, setCubyModelForJump, jumpPretty, fall } from './basic/Jump.js';
 
 scene.add(light);
 scene.background = bgTexture;
@@ -34,7 +34,6 @@ controls.update();
 planeYard.then(model => {
     scene.add(model)
     model.scale.set(1, 1, 1)
-    //console.log(model);
     characterController.addCharacter(model)
     characterController.addController(keyController)//#1
     characterController.addController(moveController)//#2
@@ -42,22 +41,17 @@ planeYard.then(model => {
     shadowController.setDirectionalLight(light.children[0])
     shadowController.setVector(new THREE.Vector3(0, 5, -5))
     characterController.addController(shadowController)//#4
-    // loopMachine.addCallback(() => {
-    //     camera.lookAt(model.position)
-    // })
     camera.lookAt(model.position)
     characterController.start()
 })
 let modelMove, cubyModel, tween;
 let position = { x: 0, y: 0, z: 0 };
-let target = { x: 0, y: 0, z: 0 };
 Cuby.then(model => {
     addAtributesToModel(0, 9, 0.5, null, model)
     setModel(model);
     cubyModel = model;
     position = model.position;
     setCubyModelForJump(model);
-    //console.log("[Position] ", position);
     tween = new TWEEN.Tween;
     modelMove = new MovementController(model);
     shadowController.setVector(new THREE.Vector3(0, 5, -5))
@@ -104,7 +98,6 @@ key.then(model => {
     keyModel = model;
     let { x, z } = calcPosition(0, 1);
     obtaclesPosition.push({ type: "KEY", x, z });
-    //console.info("[Key] ", x + "  " + z);
     scene.add(model);
     model.scale.set(1, 1, 1);
     model.position.set(x, 0.5, z);
@@ -119,21 +112,26 @@ if (tryAgain) {
 }
 
 
-let once = true, moving = false, element;
-let counter = 0;
+let once = true, element;
 
 function animate(time) {
     requestAnimationFrame(animate);
     TWEEN.update(time);
-    initialize();
-
+    if (start && once) {
+        initialize();
+        once = false;
+    }
     renderer.render(scene, camera);
 }
 
-function initialize() {
+async function initialize() {
     if (!success) {
-
-        movementOfObject();
+        while (!queue.isEmpty()) {
+            //console.log("[Init] ");
+            element = queue.dequeue();
+            console.log("Element ", queue.elements);
+            await movementOfObject();
+        }
     }
     if (success) {
         showModalTryAgain("Level completed successfully.");
@@ -141,144 +139,150 @@ function initialize() {
     if (start && !success && queue.isEmpty()) {
         showModalTryAgain("You lost.");
     }
-
 }
 
 requestAnimationFrame(animate)
-/*loopMachine.addCallback(() => {
-    if(!success){
-        movementOfObject();
-    }
-    
-    renderer.render(scene, camera);
-    if(success){
-        showModalTryAgain("Level completed successfully.");
-        btnTryAgain.hidden = false;
-        show win modal
-    }
-    if(start && !success && queue.isEmpty()){
-        showModalTryAgain("You lost.");
-         show try again
-    }
-    
-});*/
 
 let lockRemoved = false, success = false, lost = false;
 function movementOfObject() {
-    if (once) {
-        /*btnTryAgain.hidden = true;*/
-        element = queue.dequeue();
-        once = false;
-    }
     if (element == "UP") {
-        updateBeforeMoveObject(0.7, 0);
-        if (!isThereCollition()) {
-            jumpPretty("UP");
-            //position.x += 0.7;
-            //cubyModel.position.x += 0.7;
-            //let x = cubyModel.position.x + 0.35;
-            //let z = cubyModel.position.z;
-            //jump(cubyModel.position, {x: x, y: 1, z: z}, { x: x + 0.35, y:0, z: z });
-            element = queue.dequeue();
-        } else {
-            if (colitionObject.type == "KEY") {
-                removeEntity(keyModel);
-                removeEntity(lockModel);
-                lockRemoved = true;
-                //cubyModel.position.x += 0.7;
-                await jumpPretty("UP");
-                element = queue.dequeue();
-            }
-            else if ((colitionObject.type == "GOAL" || colitionObject.type == "LOCK") && lockRemoved) {
-                removeEntity(goalModel);
-                //cubyModel.position.x += 0.7;
-                await jumpPretty("UP");
-                success = true;
-            } else {
-                element = "";
-                console.error("GAME OVER");
-            }
-        }
-    }
-    if (element == "RIGHT") {
-        updateBeforeMoveObject(-0.7, 0);
-        if (!isThereCollition()) {
-            cubyModel.position.x -= 0.7;
-            element = queue.dequeue();
-        } else {
-            if (colitionObject.type == "KEY") {
-                removeEntity(keyModel);
-                removeEntity(lockModel);
-                lockRemoved = true;
-                cubyModel.position.x -= 0.7;
-                element = queue.dequeue();
-            }
-            else if ((colitionObject.type == "GOAL" || colitionObject.type == "LOCK") && lockRemoved) {
-                removeEntity(goalModel);
-                cubyModel.position.x -= 0.7;
-                success = true;
-            } else {
-                element = "";
-                console.error("GAME OVER");
-            }
-        }
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                updateBeforeMoveObject(0.7, 0);
+                if (!isThereCollition()) {
+                    jumpPretty("UP");
+                } else {
+                    if (colitionObject.type == "KEY") {
+                        removeEntity(keyModel);
+                        removeEntity(lockModel);
+                        lockRemoved = true;
+                        jumpPretty("UP");
+                    }
+                    else if ((colitionObject.type == "GOAL" || colitionObject.type == "LOCK") && lockRemoved) {
+                        removeEntity(goalModel);
+                        jumpPretty("UP");
+                        success = true;
+                    } else {
+                        queue.empty();
+                        element = "";
+                        console.error("GAME OVER");
+                    }
+                }
+                if(isOutOfMap()){
+                    fall();
+                }
+                resolve();
+            }, 310);
+        })
     }
     if (element == "DOWN") {
-        updateBeforeMoveObject(0, -0.7);
-        if (!isThereCollition()) {
-            cubyModel.position.z -= 0.7;
-            element = queue.dequeue();
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                updateBeforeMoveObject(0, -0.7);
+                if (!isThereCollition()) {
+                    jumpPretty("DOWN");
+                    //element = queue.dequeue();
 
-        } else {
-            if (colitionObject.type == "KEY") {
-                cubyModel.position.z -= 0.7;
-                removeEntity(keyModel);
-                removeEntity(lockModel);
-                lockRemoved = true;
-                element = queue.dequeue();
-            }
-            else if ((colitionObject.type == "GOAL" || colitionObject.type == "LOCK") && lockRemoved) {
-                removeEntity(goalModel);
-                cubyModel.position.z -= 0.7;
-                success = true;
-            }
-            else {
-                element = "";
-                console.error("GAME OVER");
-            }
-        }
+                } else {
+                    if (colitionObject.type == "KEY") {
+                        jumpPretty("DOWN");
+                        removeEntity(keyModel);
+                        removeEntity(lockModel);
+                        lockRemoved = true;
+                        //element = queue.dequeue();
+                    }
+                    else if ((colitionObject.type == "GOAL" || colitionObject.type == "LOCK") && lockRemoved) {
+                        removeEntity(goalModel);
+                        jumpPretty("DOWN");
+                        success = true;
+                    }
+                    else {
+                        element = "";
+                        queue.empty();
+                        console.error("GAME OVER");
+                    }
+                }
+                if(isOutOfMap()){
+                    fall();
+                }
+                resolve();
+            }, 310);
+        })
     }
-
     if (element == "LEFT") {
-        updateBeforeMoveObject(0, 0.7);
-        if (!isThereCollition()) {
-            cubyModel.position.z += 0.7;
-            element = queue.dequeue();
-        } else {
-            if (colitionObject.type == "KEY") {
-                removeEntity(keyModel);
-                removeEntity(lockModel);
-                lockRemoved = true;
-                cubyModel.position.z += 0.7;
-                element = queue.dequeue();
-            }
-            else if ((colitionObject.type == "GOAL" || colitionObject.type == "LOCK") && lockRemoved) {
-                removeEntity(goalModel);
-                cubyModel.position.z += 0.7;
-                success = true;
-            }
-            else {
-                element = "";
-                console.error("GAME OVER");
-            }
-        }
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                updateBeforeMoveObject(0, 0.7);
+                if (!isThereCollition()) {
+                    jumpPretty("LEFT");
+                    //element = queue.dequeue();
+                } else {
+                    if (colitionObject.type == "KEY") {
+                        removeEntity(keyModel);
+                        removeEntity(lockModel);
+                        lockRemoved = true;
+                        jumpPretty("LEFT");
+                        //element = queue.dequeue();
+                    }
+                    else if ((colitionObject.type == "GOAL" || colitionObject.type == "LOCK") && lockRemoved) {
+                        removeEntity(goalModel);
+                        jumpPretty("LEFT");
+                        success = true;
+                    }
+                    else {
+                        queue.empty();
+                        element = "";
+                        console.error("GAME OVER");
+                    }
+                }
+                if(isOutOfMap()){
+                    fall();
+                }
+                resolve();
+            }, 310);
+        })
+    }
+    if (element == "RIGHT") {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                updateBeforeMoveObject(-0.7, 0);
+                if (!isThereCollition()) {
+                    jumpPretty("RIGHT");
+                    //element = queue.dequeue();
+                } else {
+                    if (colitionObject.type == "KEY") {
+                        removeEntity(keyModel);
+                        removeEntity(lockModel);
+                        lockRemoved = true;
+                        jumpPretty("RIGHT");
+                        //element = queue.dequeue();
+                    }
+                    else if ((colitionObject.type == "GOAL" || colitionObject.type == "LOCK") && lockRemoved) {
+                        removeEntity(goalModel);
+                        jumpPretty("RIGHT");
+                        success = true;
+                    } else {
+                        element = "";
+                        queue.empty();
+                        console.error("GAME OVER");
+                    }
+                }
+
+                if(isOutOfMap()){
+                    fall();
+                }
+                resolve();
+            }, 310);
+        })
     }
 }
-
-
 
 function removeEntity(object) {
     scene.remove(object);
 }
 //loopMachine.start()
-keyListener.start()
+if (start) {
+    initialize();
+}
+
+//keyListener.start()

@@ -9,8 +9,9 @@ function isThereCollition(){
     for(let i=0; i<obtaclesPosition.length;i++){
         let obstacle = obtaclesPosition[i];
         //console.log(position.x + " , " + position.z + " [] " + obstacle.x + " , " + obstacle.z);
-        if(position.x == obstacle.x && position.z== obstacle.z){
+        if(position.x == obstacle.x && position.z== obstacle.z && obstacle.type != null){
             colitionObject = obstacle;
+            console.log("[CO] ",colitionObject)
             return true;
         }
     }
@@ -21,6 +22,18 @@ function updateBeforeMoveObject(x,z){
     position.z = Math.round((position.z + z)*100)/100;
 }
 
+function isOutOfMap(){
+    let pX = position.x;
+    let pZ = position.z;
+    console.log("pX " ,pX);
+    console.log("pZ ", pZ);
+    if(pX < -3.1 || pX > 3.2 || pZ > 3.1 || pZ < -3.2){
+        return true;
+    }
+    return false;
+
+}
 
 
-export  {obtaclesPosition, setModel, isThereCollition, updateBeforeMoveObject, colitionObject};
+
+export  {obtaclesPosition, setModel, isThereCollition, updateBeforeMoveObject, colitionObject, isOutOfMap};
